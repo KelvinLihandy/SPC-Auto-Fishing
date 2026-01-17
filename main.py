@@ -1,4 +1,7 @@
 import time
+import ctypes
+import random
+import math
 import pyautogui
 from itertools import product
 from pynput import keyboard
@@ -7,6 +10,7 @@ import numpy as np
 import easyocr
 reader = easyocr.Reader(['en'])
 
+MOUSEEVENTF_MOVE = 0x0001
 CLICK_DELAY = 0.15
 SEQUENCES = [
     "".join(p)
@@ -25,18 +29,58 @@ WIDTH = 351
 running = False
 worker = None
 
-# def condense():
-
-#     # add move to crafting table here
-        
-#     for _ in range(10):
-#         pyautogui.click(button="right")
-#         x, y = pyautogui.position()
-#         print(f"Right-click at ({x}, {y})")
-#         time.sleep(0.5)
-#     print('condensed')
+def move_condense(dx, dy, steps=60):
+    dx += random.randint(-10, 10)
+    dy += random.randint(-10, 10)
     
-#     # add return to spot here1
+    steps = random.randint(30, 55)
+    total_time = random.uniform(0.10, 0.20)
+    base_delay = total_time / steps
+    curve_bias = random.uniform(0.9, 1.1)
+
+    sent_x = 0
+    sent_y = 0
+
+    for i in range(steps - 1):
+        t = i / (steps - 1)
+
+        ease = (1 - math.cos(math.pi * t)) / 2
+        ease = pow(ease, curve_bias)
+
+        target_x = dx * ease
+        target_y = dy * ease
+
+        step_x = int(target_x - sent_x)
+        step_y = int(target_y - sent_y)
+
+        sent_x += step_x
+        sent_y += step_y
+
+        ctypes.windll.user32.mouse_event(
+            MOUSEEVENTF_MOVE,
+            step_x,
+            step_y,
+            0,
+            0
+        )
+
+        time.sleep(base_delay * random.uniform(0.65, 1.35))
+
+    ctypes.windll.user32.mouse_event(
+        MOUSEEVENTF_MOVE,
+        dx - sent_x,
+        dy - sent_y,
+        0,
+        0
+    )
+
+def condense():
+    move_condense(900,80)
+    time.sleep(0.25)
+    for _ in range(5):
+        pyautogui.click(button="right")
+        time.sleep(1)
+    move_condense(-900,-80)
 
 def detect():
     screenshot = pyautogui.screenshot(region=(X, Y, WIDTH, HEIGHT))
@@ -58,14 +102,14 @@ def execute_sequence(seq):
         time.sleep(CLICK_DELAY)
     pyautogui.press('2')
     pyautogui.press('1')
+    
 def fishing_loop():
-    # maybe add sound detecting
     global running
     counter = 0
     while running:
-        # if(counter > 10):
-        #     condense()
-        #     counter = 0
+        if(counter >= 30):
+            condense()
+            counter = 0
         for i in range(1):
             time.sleep(0.25)
             pyautogui.click(button="right")

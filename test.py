@@ -1,26 +1,28 @@
-from pynput import keyboard
-import pyautogui
+from pynput import mouse, keyboard
 
-Y = 405 
-HEIGHT = 134
-# FULLSCREEN
-# X = 755
-# WIDTH = 391
+dx_total = 0
+dy_total = 0
+last = None
 
-# HALFSCREEN
-X = 1252
-WIDTH = 351
+def on_move(x, y):
+    global last, dx_total, dy_total
+    if last:
+        dx_total += x - last[0]
+        dy_total += y - last[1]
+    last = (x, y)
 
-def on_click(key):
-    if key.char == '1':
-        img = pyautogui.screenshot(region=(X, Y, WIDTH, HEIGHT))
-        img.save("debuge.png")
-        print("saved debuge")
+def on_press(key):
+    global dx_total, dy_total
+    try:
+        if key.char == '1':
+            print(f"Measured movement → ΔX: {dx_total}, ΔY: {dy_total}")
+            dx_total = 0
+            dy_total = 0
+    except AttributeError:
+        pass
+
+mouse.Listener(on_move=on_move).start()
+keyboard.Listener(on_press=on_press).join()
 
 
-# Set up the listener
-with keyboard.Listener(on_press=on_click) as listener:
-        listener.join()
-# 1340 415
-# 1083 430
-# 830 524
+# start = 480 -10
