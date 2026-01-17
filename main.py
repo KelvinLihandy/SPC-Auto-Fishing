@@ -42,7 +42,8 @@ def detect():
     screenshot = pyautogui.screenshot(region=(X, Y, WIDTH, HEIGHT))
     img = np.array(screenshot)
     text = reader.readtext(img, allowlist='LR', detail=0)
-    print(f'detected text: {text}')
+    if text:
+        print(f'detected text: {text}')
     for seq in sorted(SEQUENCES, key=len, reverse=True):
         if seq in text:
             return seq
@@ -55,7 +56,8 @@ def execute_sequence(seq):
         elif c == "R":
             pyautogui.click(button="right")
         time.sleep(CLICK_DELAY)
-
+    pyautogui.press('2')
+    pyautogui.press('1')
 def fishing_loop():
     # maybe add sound detecting
     global running
@@ -64,11 +66,10 @@ def fishing_loop():
         # if(counter > 10):
         #     condense()
         #     counter = 0
-        for i in range(3):
-            # multi right click to avoid not casting caused by lag
-            if i > 0:
-                time.sleep(0.2)
+        for i in range(1):
+            time.sleep(0.25)
             pyautogui.click(button="right")
+        print(f'fishing loop {counter+1}')
         waiting = True
         while waiting and running:
             detected_seq = detect()
@@ -77,16 +78,13 @@ def fishing_loop():
                 waiting = False
                 execute_sequence(detected_seq)
                 counter += 1
-                print(f'fishing loop {counter}')
             else:
                 time.sleep(0.10)
-
-        time.sleep(0.5)
 
 def on_press(key):
     global running, worker
     try:
-        if key.char == '1':
+        if key.char == '=':
             if not running:
                 running = True
                 worker = threading.Thread(target=fishing_loop, daemon=True)
